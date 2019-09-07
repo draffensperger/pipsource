@@ -1,0 +1,4 @@
+# This is a requirements file!
+
+pynvim=0.3.2
+autopep8=1.4.4

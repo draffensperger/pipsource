@@ -12,6 +12,7 @@ from typing import List
 from typing import NamedTuple
 from typing import Optional
 import urllib.request
+import requirements
 
 parser = argparse.ArgumentParser(
     description='Vendor and install pip packages from source.')
@@ -27,11 +28,6 @@ parser.add_argument('--vendor-path', type=str, default='~/.pipsource/vendor/',
 logging.getLogger().setLevel(logging.INFO)
 
 
-class Requirement(NamedTuple):
-    package: str
-    version: str
-
-
 class PackageConfig(NamedTuple):
     package: str
     git_path: Optional[str]
@@ -40,23 +36,6 @@ class PackageConfig(NamedTuple):
     version_commits: Optional[Dict[str, str]]
     install_requires: List[str]
     version_tag_format: str = '%s'
-
-
-def _parse_requirements(requirements_file: str) -> List[Requirement]:
-  """Parses out the requirements from a requirements.txt formatted file."""
-  with open(requirements_file) as f:
-     requirements_lines = f.readlines()
-
-  requirements = []
-  for line in requirements_lines:
-    if line.startswith('#') or len(line.strip()) == 0:
-      continue
-    parts = line.split('=')
-    if len(parts) != 2:
-      logging.critical('Malformed requirements line: %s', line)
-      sys.exit(1)
-    requirements.append(Requirement(package=parts[0], version=parts[1].strip()))
-  return requirements
 
 
 def _get_git_url(package: str) -> str:
@@ -110,9 +89,16 @@ def _parse_configs(config_file: str) -> Dict[str, PackageConfig]:
   return parsed_packages
 
 
-def _get_config(package: str) -> PackageConfig:
-  git_url = _get_git_url(package)
+def _get_config(req: requirements.Requirement) -> PackageConfig:
+  git_url = _get_git_url(req.package)
   logging.info('got git url: %s', git_url)
+  return PackageConfig(
+      package=req.package,
+      git_path=git_url,
+      hg_path=None,
+      vendored_version=req.version,
+      install_requires=[],
+      version_commits=None)
 
 
 def _vendor_git_package(package, version, label, git_url):
@@ -157,11 +143,13 @@ def _vendor_git_package(package, version, label, git_url):
   subprocess.run(['mv', git_dir, git_moved_dir], stderr=subprocess.DEVNULL)
 
 def _run_vendor(
-    requirements: List[Requirement], configs: Dict[str, PackageConfig]):
+    requirements: List[requirements.Requirement], configs: Dict[str, PackageConfig]):
   logging.info('configs: %s', configs)
   for r in requirements:
     if r.package not in configs:
-      _get_config(r.package)
+      config = _get_config(r)
+      print('got config:')
+      print(config)
     print(r)
 
 
@@ -169,11 +157,11 @@ def main():
   """Runs the pipsource command utility."""
   args = parser.parse_args()
 
-  requirements = _parse_requirements(os.path.expanduser(args.requirements_file))
+  reqs = requirements.parse(os.path.expanduser(args.requirements_file))
   configs = _parse_configs(os.path.expanduser(args.config))
 
   if args.command == 'vendor':
-    _run_vendor(requirements, configs)
+    _run_vendor(reqs, configs)
 
 if __name__ == "__main__":
   main()
