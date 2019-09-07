@@ -12,6 +12,8 @@ from typing import List
 from typing import NamedTuple
 from typing import Optional
 import urllib.request
+
+import pypi_util
 import requirements
 
 parser = argparse.ArgumentParser(
@@ -36,25 +38,6 @@ class PackageConfig(NamedTuple):
     version_commits: Optional[Dict[str, str]]
     install_requires: List[str]
     version_tag_format: str = '%s'
-
-
-def _get_git_url(package: str) -> str:
-  """Retrieves GitHub page if specified for given PyPi package via PyPi API."""
-  # TODO: make sure this verifies HTTPS certs
-  data = urllib.request.urlopen(
-      'https://pypi.python.org/pypi/%s/json' % package).read()
-  data_parsed = json.loads(data)
-  info = data_parsed['info']
-  home_page = info.get('home_page')
-  if home_page.startswith('http://github.com'):
-    home_page = home_page.replace('http://github.com', 'https://github.com')
-  if re.match('^https://github.com/', home_page):
-    return home_page
-  description = info.get('description')
-  match = re.search('github.com\/[^\/]+/[a-zA-Z-_]+', description)
-  if match:
-    return 'https://%s' % match.group(0)
-  return None
 
 
 def _parse_configs(config_file: str) -> Dict[str, PackageConfig]:
@@ -90,7 +73,7 @@ def _parse_configs(config_file: str) -> Dict[str, PackageConfig]:
 
 
 def _get_config(req: requirements.Requirement) -> PackageConfig:
-  git_url = _get_git_url(req.package)
+  git_url = pypi_util.get_git_url(req.package)
   logging.info('got git url: %s', git_url)
   return PackageConfig(
       package=req.package,
