@@ -1,5 +1,7 @@
 # pipsource - Install vendored Python pip packages from source
 
+[![circleci][circleci-image]][circleci-url]
+
 This package provides a simple utility for vendoring Python pip packages that are
 hosted in git repos and generating a script that will install them into a
 virtualenv without relying at all on the PyPI package repository.
@@ -99,3 +101,5 @@ prefix, e.g. `v1.3`. The `configparser` shows a Mercurial URL example.
   }
 }
 ```
+[circleci-image]: https://circleci.com/gh/draffensperger/pipsource.svg?style=shield
+[circleci-url]: https://circleci.com/gh/draffensperger/pipsource
