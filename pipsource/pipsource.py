@@ -12,6 +12,7 @@ from typing import List
 from typing import NamedTuple
 from typing import Optional
 import urllib.request
+import config
 
 import pypi_util
 import requirements
@@ -30,52 +31,10 @@ parser.add_argument('--vendor-path', type=str, default='~/.pipsource/vendor/',
 logging.getLogger().setLevel(logging.INFO)
 
 
-class PackageConfig(NamedTuple):
-    package: str
-    git_path: Optional[str]
-    hg_path: Optional[str]
-    vendored_version: str
-    version_commits: Optional[Dict[str, str]]
-    install_requires: List[str]
-    version_tag_format: str = '%s'
-
-
-def _parse_configs(config_file: str) -> Dict[str, PackageConfig]:
-  """Loads package map from JSON file."""
-  if not os.path.isfile(config_file):
-    logging.info('Config file %s does not exist yet' % config_file)
-    return {}
-
-  with open(config_file) as f:
-    config_json = json.loads(f.read())
-
-  if 'packages' not in config_json:
-    logging.critical('Config JSON must have "packages" field')
-    sys.exit(1)
-  packages = config_json['packages']
-  if not type(packages) is dict:
-    logging.critical('Config JSON "packages" field must be an object')
-    sys.exit(1)
-
-  parsed_packages = {}
-  for package in packages:
-    package_json = packages[package]
-    parsed_packages[package] = PackageConfig(
-        package=package,
-        git_path=package_json['git'],
-        hg_path=package_json['hg'],
-        vendored_version=package_json['vendored'],
-        version_tag_format=(
-            package_json['version-tag-format'] or DEFAULT_VERSION_TAG_FORMAT),
-        version_commits=package_json['version-commits'],
-        install_requires=package_json['install_requires'])
-  return parsed_packages
-
-
-def _get_config(req: requirements.Requirement) -> PackageConfig:
+def _get_config(req: requirements.Requirement) -> config.Package:
   git_url = pypi_util.get_git_url(req.package)
   logging.info('got git url: %s', git_url)
-  return PackageConfig(
+  return config.Package(
       package=req.package,
       git_path=git_url,
       hg_path=None,
@@ -126,7 +85,8 @@ def _vendor_git_package(package, version, label, git_url):
   subprocess.run(['mv', git_dir, git_moved_dir], stderr=subprocess.DEVNULL)
 
 def _run_vendor(
-    requirements: List[requirements.Requirement], configs: Dict[str, PackageConfig]):
+    requirements: List[requirements.Requirement],
+    configs: Dict[str, config.Package]):
   logging.info('configs: %s', configs)
   for r in requirements:
     if r.package not in configs:
@@ -141,7 +101,7 @@ def main():
   args = parser.parse_args()
 
   reqs = requirements.parse(os.path.expanduser(args.requirements_file))
-  configs = _parse_configs(os.path.expanduser(args.config))
+  configs = config.parse(os.path.expanduser(args.config))
 
   if args.command == 'vendor':
     _run_vendor(reqs, configs)

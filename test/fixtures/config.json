@@ -1,0 +1,11 @@
+{
+  "packages": {
+    "ansicolor": {
+      "git": "https://github.com/numerodix/ansicolor",
+      "version-commits": {
+        "0.2.6": "a5a5c31dc6de5c864a0c5684ae326972573a712b"
+      },
+      "vendored": "0.2.6"
+    }
+  }
+}
