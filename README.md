@@ -53,16 +53,19 @@ looks like this:
 
 ```
 {
-  "[package-name]": {
-    "git": "[git-https-url]",
-    "hg": "[mercurial-https-url (use instead of `git` field if package uses hg)]"
-    "version-tag-format": "[optional, format with %s, e.g. 'v%s', default is '%s']",
-    "version-commits": {
-      "[version]": "[git-sha-hash, use this map if package lacks version tags]"
+  "packages": [
+    "[package-name]": {
+      "git": "[git-https-url]",
+      "hg": "[mercurial-https-url (use instead of `git` field if package uses hg)]"
+      "version-tag-format": "[optional, format with %s, e.g. 'v%s', default is '%s']",
+      "version-commits": {
+        "[version]": "[git-sha-hash, use this map if package lacks version tags]"
+      },
+      "skip-vendor-python2": [set to true to not vendor if using python3],
+      "skip-vendor-python3": [set to true to not vendor if using python2]
     },
-    "skip-vendor-python2": [set to true to not vendor if using python3],
-    "skip-vendor-python3": [set to true to not vendor if using python2]
-  }
+    ...
+  ]
 }
 ```
 
@@ -76,21 +79,23 @@ prefix, e.g. `v1.3`. The `configparser` shows a Mercurial URL example.
 
 ```json
 {
-  "PyYAML": {
-    "git": "https://github.com/yaml/pyyaml"
-  },
-  "ansicolor": {
-    "git": "https://github.com/numerodix/ansicolor",
-    "version-commits": {
-      "0.2.6": "a5a5c31dc6de5c864a0c5684ae326972573a712b"
+  "packages": {
+    "PyYAML": {
+      "git": "https://github.com/yaml/pyyaml"
+    },
+    "ansicolor": {
+      "git": "https://github.com/numerodix/ansicolor",
+      "version-commits": {
+        "0.2.6": "a5a5c31dc6de5c864a0c5684ae326972573a712b"
+      }
+    },
+    "autoflake": {
+      "git": "https://github.com/myint/autoflake",
+      "version-tag-format": "v%s"
+    },
+    "configparser": {
+      "hg": "https://bitbucket.org/ambv/configparser"
     }
-  },
-  "autoflake": {
-    "git": "https://github.com/myint/autoflake",
-    "version-tag-format": "v%s"
-  },
-  "configparser": {
-    "hg": "https://bitbucket.org/ambv/configparser"
   }
 }
 ```
